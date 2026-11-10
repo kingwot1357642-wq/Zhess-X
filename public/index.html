@@ -57,6 +57,7 @@ body{background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"N
 .stb{position:absolute;right:2%;top:2%;font-size:.55em;z-index:3;line-height:1;display:flex;flex-wrap:wrap;justify-content:flex-end;max-width:78%;gap:1px}
 .fxl{position:absolute;inset:0;pointer-events:none;z-index:6;overflow:hidden}
 .fxs{width:100%;height:100%;display:block}
+@keyframes vsp{to{transform:rotate(360deg)}}.vsp{animation:vsp 3.2s linear infinite;transform-origin:0 0}
 .fa{animation-delay:calc(var(--dl,0ms) + var(--d,1000ms)*var(--a,0));animation-duration:calc(var(--d,1000ms)*var(--b,1));animation-fill-mode:both;animation-timing-function:ease-out;transform-box:fill-box;transform-origin:center}
 .fa.pulse{animation-name:fxPulse}
 .fa.burst{animation-name:fxBurst}
@@ -201,6 +202,7 @@ body[data-arena] .cell.k{background-color:var(--ac2)}
 <radialGradient id="fxWhite"><stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="#dfe9ff" stop-opacity=".7"/><stop offset="1" stop-color="#dfe9ff" stop-opacity="0"/></radialGradient>
 <radialGradient id="fxGreen"><stop offset="0" stop-color="#f0ffe8"/><stop offset=".45" stop-color="#7fe08a" stop-opacity=".8"/><stop offset="1" stop-color="#3fae5a" stop-opacity="0"/></radialGradient>
 <radialGradient id="fxGold"><stop offset="0" stop-color="#fffbe0"/><stop offset=".45" stop-color="#ffd25a" stop-opacity=".85"/><stop offset="1" stop-color="#e09a20" stop-opacity="0"/></radialGradient>
+<radialGradient id="fxWater"><stop offset="0" stop-color="#f0fbff"/><stop offset=".45" stop-color="#4fb0f0" stop-opacity=".8"/><stop offset="1" stop-color="#1d5a9c" stop-opacity="0"/></radialGradient>
 <radialGradient id="fxPurple"><stop offset="0" stop-color="#f5e8ff"/><stop offset=".45" stop-color="#a35be0" stop-opacity=".8"/><stop offset="1" stop-color="#5a2a9a" stop-opacity="0"/></radialGradient>
 <radialGradient id="fxSmoke"><stop offset="0" stop-color="#d7dbe8" stop-opacity=".9"/><stop offset=".6" stop-color="#8a8fa6" stop-opacity=".6"/><stop offset="1" stop-color="#6a6f86" stop-opacity="0"/></radialGradient>
 <radialGradient id="fxPoison"><stop offset="0" stop-color="#e2ffb4"/><stop offset=".5" stop-color="#7fcf3a" stop-opacity=".7"/><stop offset="1" stop-color="#4a8a1a" stop-opacity="0"/></radialGradient>
@@ -216,6 +218,7 @@ body[data-arena] .cell.k{background-color:var(--ac2)}
       <div style="color:#9eacc3;margin:12px 0 4px">หรือเข้าร่วมห้องด้วยรหัส</div>
       <input id="roomCodeInput" maxlength="6" placeholder="รหัสห้อง 6 ตัว" autocomplete="off">
       <button id="joinRoomBtn" class="alt">เข้าร่วมห้อง</button>
+      <button id="botBtn" class="alt">เล่นกับบอท (ออฟไลน์)</button>
     </div>
     <div id="lobbyRoom" hidden>
       <div style="color:#9eacc3">รหัสห้องของคุณ</div>
@@ -251,8 +254,8 @@ sword:{n:"Swordman",rar:"common",el:"steel",hp:100,mv:1,pop:2,
  blk:[{p:.15,c:["phys"],l:["low"],tg:"arrow"}],
  s:[{n:"Slash",i:"slash",k:"t",r:1,d:7,c:"phys",l:"low",cd:0,v:"slash",tags:["phys","sword","melee","ground"]}]},
 archer:{n:"Archer",rar:"common",el:"wind",hp:60,mv:1,pop:2,pas:"",blk:[],
- s:[{n:"Wind Arrow",i:"windArrow",k:"t",r:2,d:5,c:"phys",l:"low",cd:1,tg:"arrow",v:"windArrow",tags:["phys","arrow","ranged"]},
-    {n:"Wind Meteorite",i:"arrowRain",k:"t",r:4,d:10,dt:"true",c:"phys",l:"mid",cd:3,tg:"arrow",v:"arrowRain",tags:["phys","arrow","ranged"]}]},
+ s:[{n:"Wind Arrow",i:"windArrow",k:"t",r:2,d:5,c:"phys",l:"low",cd:1,tg:"arrow",v:"windArrow",tags:["phys","arrow","wind","ranged"]},
+    {n:"Wind Meteorite",i:"arrowRain",k:"t",r:4,d:10,dt:"true",c:"phys",l:"mid",cd:3,tg:"arrow",v:"arrowRain",tags:["phys","arrow","wind","ranged"]}]},
 mage:{n:"Firemage",rar:"common",el:"fire",hp:60,mv:1,pop:3,pas:"",blk:[],
  s:[{n:"Fireball",i:"fireball",k:"t",r:2,d:7,c:"magic",l:"low",cd:1,tg:"fire",v:"fireball",tags:["magic","fire","ranged"]},
     {n:"Meteorite",i:"meteor",v:"meteor",k:"a",r:"ทั้งกระดาน",d:5,c:"magic",l:"mid",cd:4,tg:"meteor",tags:["magic","fire","ranged"],x:"โดน 5 ช่อง (กากบาท) โดนพวกเดียวกันได้"},
@@ -284,18 +287,37 @@ jugger:{n:"Juggerknight",rar:"epic",el:"royal",hp:150,mv:1,pop:4,utags:["human",
  pas:"Armored Human: 50% ปัดป้องการโจมตีกายภาพทุกชนิดทุกระยะ",
  blk:[{p:.5,c:["phys"],l:["low","mid","high"]}],
  s:[{n:"Steel Giant Sword",i:"gsword",v:"gsword",k:"t",r:1,d:6,c:"phys",l:"low",cd:0,stunP:.2,stun:1,tags:["phys","sword","melee","ground","kingdom"],x:"โอกาสสตัน 20% · ดาบอาณาจักร +50% ต่อมังกร/ภูติ/ตำนาน"},
-    {n:"Crushing Leap",i:"leap",v:"leap",k:"L",r:2,d:10,c:"phys",l:"high",cd:3,stun:1,tags:["phys","high","sword","ground","kingdom"],x:"กระโดดใส่ศัตรู ผลักออก 1 ช่องแล้วยืนแทนที่ · สตัน 1 ตา"}]}};
+    {n:"Crushing Leap",i:"leap",v:"leap",k:"L",r:2,d:10,c:"phys",l:"high",cd:3,stun:1,tags:["phys","high","sword","ground","kingdom"],x:"กระโดดใส่ศัตรู ผลักออก 1 ช่องแล้วยืนแทนที่ · สตัน 1 ตา"}]},
+hunter:{n:"Beast Hunter",rar:"epic",el:"wind",hp:90,mv:1,pop:5,utags:["human"],
+ rngIn:1.5,healMul:.5,curse:1,
+ pas:"Curse of Master: รับโล่/สถานะช่วยเหลือจากทีมไม่ได้ (ฟื้นฟูได้ แต่ลดเหลือ 50%) · โดนระยะไกล +50% (ยกเว้นจากมังกร/อสูร)",
+ blk:[],
+ s:[{n:"Jade Katana",i:"katana",v:"katana",k:"t",r:1,d:6,bd:12,bleedB:2,aa:1,c:"phys",l:"low",cd:1,tags:["phys","sword","melee","ground"],x:"ใส่มังกร/อสูร 12 + Bleeding 2 ตา · ตีมังกร/อสูรที่บินอยู่ได้"},
+    {n:"Qi Tian Slash",i:"qislash",v:"qislash",k:"q",r:3,d:5,bd:9,aa:1,c:"phys",l:"mid",cd:3,tags:["phys","sword","ground","mid"],x:"คลื่นดาบตรง 3 ช่อง เลือก 1 ใน 8 ทิศ ทะลุโดนศัตรูทุกตัว · ใส่มังกร/อสูร 9 และตีตัวที่บินอยู่ได้"},
+    {n:"Awakening",i:"awaken",v:"awaken",k:"v",cd:4,x:"3 เทิร์น: เดิน 2 ช่อง · ดาเมจ +1 (+3 ใส่มังกร/อสูร) · โดนมังกร/อสูร −90% (CD นับหลังหมด)"}]},
+leviathan:{n:"Ocean Leviathan",rar:"epic",el:"frost",hp:160,mv:1,pop:5,utags:["legend","monster","water"],
+ res:{water:.7,earth:1.5,wind:1.5},stunRes:.1,mulRanged:.8,mulMelee:1.2,
+ pas:"Iron Body: โอกาสโดนสตัน −10% · โดนระยะไกล −20% · โดนระยะใกล้ +20% · โดนแท็กน้ำ −30% · โดนแท็กดิน/ลม +50%",
+ blk:[],
+ s:[{n:"Ocean Spear",i:"oceanSpear",v:"tide",k:"t",r:2,d:5,c:"phys",l:"mid",cd:1,stunP:.1,stun:1,tags:["phys","water","ground","mid","melee"],x:"หอกน้ำพุ่งจากพื้น เป้าเดี่ยว · โอกาสสตัน 10%"},
+    {n:"Tide Shield",i:"tideShield",v:"bubble",k:"g",r:2,sh:10,cd:2,x:"โล่ 10 ให้พวกเดียวกัน/ตัวเอง ระยะ 2 · ผู้ร่ายติดใบ้ 2 รอบรวมรอบร่าย (CD 2 นับหลังหายใบ้)"},
+    {n:"Whirlpool",i:"whirlpool",v:"vortex",k:"o",r:"ทั้งกระดาน",d:3,c:"magic",l:"mid",cd:4,stunP:.05,stun:1,tags:["water","ground","ranged","magic","mid"],x:"สร้างวังวน 5×5 ดูดศัตรูเข้าหาศูนย์กลางทีละช่อง ตอนร่ายและต้นเทิร์นผู้ร่าย รวม 5 ครั้ง · ดาเมจ 3 ครั้งแรก ต่อมา 2 · สตัน 5% (CD 4 นับหลังวังวนหาย)"}]}};
 const KEYS=Object.keys(R),CAP=15,RAR={common:"Common",uncommon:"Uncommon",rare:"Rare",epic:"Epic",legend:"Legend"};
-const TAGN={phys:"กายภาพ",magic:"เวทย์",melee:"ระยะใกล้",ranged:"ระยะไกล",ground:"พื้นดิน",fire:"ไฟ",water:"น้ำ",sword:"ดาบ",arrow:"ธนู",kingdom:"ดาบอาณาจักร",claw:"กรงเล็บ",dagger:"มีด",lightning:"สายฟ้า",breath:"ลมหายใจ",tail:"หาง",high:"โจมตีระดับสูง"};
+const TAGN={phys:"กายภาพ",magic:"เวทย์",melee:"ระยะใกล้",ranged:"ระยะไกล",ground:"พื้นดิน",fire:"ไฟ",water:"น้ำ",sword:"ดาบ",arrow:"ธนู",kingdom:"ดาบอาณาจักร",claw:"กรงเล็บ",dagger:"มีด",lightning:"สายฟ้า",wind:"ลม",earth:"ดิน",breath:"ลมหายใจ",tail:"หาง",high:"โจมตีระดับสูง",mid:"โจมตีระดับกลาง"};
 const hasT=(s,g)=>(s.tags||[]).includes(g);
 // A skill counts as ranged ONLY when it carries the "ranged" tag. Reach alone (range 2+) does not make it ranged,
 // so every ranged attack is declared explicitly on the skill and the rules cannot contradict each other.
 const isRanged=s=>hasT(s,"ranged");
 const unitTags=u=>[...(R[u.k].utags||[]),...(R[u.k].rar==="legend"?["legend"]:[])];
+// "beast" = dragon or monster (the hunter's quarry)
+// Curse of Master: a unit with curse:1 cannot receive shields or helpful statuses from its teammates (itself is fine)
+const allyBuffOK=(src,t)=>!(R[t.k].curse&&t.team===src.team&&t!==src);
+const isBeast=u=>unitTags(u).some(g=>g==="dragon"||g==="monster");
 // can this skill touch this target at all? (frozen, flying vs ground skills, grounded dragon vs ranged skills)
+// A skill with aa (anti-air) can still hit a flying beast although it carries the ground tag.
 function canHit(s,t){
   if(!U.includes(t)||t.st.freeze>0)return false;
-  if(hasT(s,"ground")&&t.fly>0)return false;
+  if(hasT(s,"ground")&&t.fly>0&&!(s.aa&&isBeast(t)))return false;
   if(isRanged(s)&&R[t.k].rangedGroundImmune&&!(t.fly>0))return false;
   return true;
 }
@@ -312,7 +334,7 @@ function pushCell(u,t){
   return best?[best.x,best.y]:null;
 }
 const CR=[[0,0],[1,0],[-1,0],[0,1],[0,-1]];
-let U=[],P=[{mp:2,ap:2},{mp:2,ap:2}],sel=null,mode=-1,turn=0,over=-1,pick=[],msg="",FX=[],fxOut=[],nid=1;
+let U=[],P=[{mp:2,ap:2},{mp:2,ap:2}],sel=null,mode=-1,turn=0,over=-1,pick=[],msg="",FX=[],fxOut=[],nid=1,VX=[];
 const $=id=>document.getElementById(id);
 const at=(x,y)=>U.find(u=>u.x===x&&u.y===y);
 const byId=id=>U.find(u=>u.id===id);
@@ -323,7 +345,7 @@ const dis=u=>u.stunned||u.st.freeze>0;
 const hidden=u=>(onlineGame?u.team!==onlineMyTeam:u.team===1)&&u.ww>0;
 const shape=(k,team,ex="")=>{const e=EL[R[k].el];return `<div class="sh s-${R[k].rar} ${ex}" style="--ea:${e.a};--eb:${e.b};--tc:var(${team?"--en":"--me"});--tg:${team?"rgba(255,90,102,.85)":"rgba(53,168,255,.85)"}"><span class="o"></span><span class="n"></span>${CHAR(k)}</div>`};
 const info=s=>[s.d?((s.dt==="true"?"ดาเมจจริง":s.c==="phys"?"กายภาพ":"เวทย์")+" "+s.d):(s.heal?"ฟื้นฟู "+s.heal:null),s.r!==undefined?"ระยะ "+s.r:null,"CD "+s.cd].filter(Boolean).join(" · ");
-const icons=u=>[u.st.bleed>0?stI("bleed",u.st.bleed<10?u.st.bleed:""):"",u.st.poison?stI("poison",u.st.poison):"",u.st.burn?stI("burn",u.st.burn):"",u.st.freeze>0?stI("freeze"):"",u.st.silent>0?stI("silent"):"",u.stunned&&turn===u.team?stI("stun"):"",u.st.regen?stI("regen"):"",u.ww>0?stI("ghost"):""].join("");
+const icons=u=>[u.st.bleed>0?stI("bleed",u.st.bleed<10?u.st.bleed:""):"",u.st.poison?stI("poison",u.st.poison):"",u.st.burn?stI("burn",u.st.burn):"",u.st.freeze>0?stI("freeze"):"",u.st.silent>0?stI("silent"):"",u.stunned&&turn===u.team?stI("stun"):"",u.st.regen?stI("regen"):"",u.ww>0?stI("ghost"):"",u.awk>0?stI("awaken"):""].join("");
 
 /* ---------- ART: silhouette characters (dark figure, rim light, element colour) ---------- */
 const SP="M0 -4L1.1 -1.1L4 0L1.1 1.1L0 4L-1.1 1.1L-4 0L-1.1 -1.1Z";
@@ -344,7 +366,7 @@ const EL={
 const IMG="img/";
 const CHAR=k=>`<img class="ch" src="${IMG}char/${k}.svg" alt="" draggable="false" onerror="this.style.visibility='hidden'">`;
 const ICON=n=>`<img class="ic" src="${IMG}icon/${n}.svg" alt="" draggable="false" onerror="this.style.visibility='hidden'">`;
-const ICON_NAMES="arrowRain asteroid aura blast bleed breath broom burn claws dagger dash fireball freeze ghost gsword heart leap light lightning meteor poison potion regen rejuv rotate shield silent skull slash smoke stun swords trophy windArrow wing".split(" ");
+const ICON_NAMES="arrowRain asteroid aura awaken blast bleed breath broom burn claws dagger dash fireball freeze ghost gsword heart katana leap light lightning meteor oceanSpear poison potion qislash regen rejuv rotate shield silent skull slash smoke stun swords tideShield trophy whirlpool windArrow wing".split(" ");
 // preload everything so frames never flash empty
 KEYS.forEach(k=>{new Image().src=IMG+"char/"+k+".svg"});ICON_NAMES.forEach(n=>{new Image().src=IMG+"icon/"+n+".svg"});
 const stI=(n,num)=>`<span class="st">${ICON(n)}${num?`<b>${num}</b>`:""}</span>`;
@@ -460,6 +482,25 @@ leap:(f,x,y,x2,y2,V)=>{
    +TR(px,py,ring(5,"#ffe27a",1,.5,.4)+bits(f,3,S_STAR,.5,.5,8,-10));
 }
 });
+/* ---------- effects for the Beast Hunter and the hidden-unit ambush ---------- */
+Object.assign(FXD,{katana:1100,qislash:1400,awaken:1500,ambush:1200,tide:1300,bubble:1400,vortex:1500});
+Object.assign(FXH,{katana:200,qislash:330,tide:300,bubble:300});
+const CRESC=`<path d="M3 -8Q10 0 3 8Q5 0 3 -8Z" fill="#a8ffe9"/><path d="M0 -7Q6 0 0 7Q2 0 0 -7Z" fill="#16b394" fill-opacity=".8"/><path d="M-3 -5Q1 0 -3 5" stroke="#5ff5d4" stroke-opacity=".5" stroke-width="1.6" fill="none" stroke-linecap="round"/>`;
+Object.assign(FXR,{
+katana:(f,x,y,x2,y2)=>TR(x2,y2,`<path pathLength="1" d="M-9 -9Q4 -3 9 9" fill="none" stroke="#5ff5d4" stroke-opacity=".55" stroke-width="5.5" stroke-linecap="round" ${K("draw",.04,.4)}/><path pathLength="1" d="M-9 -9Q4 -3 9 9" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" ${K("draw",.04,.4)}/><path pathLength="1" d="M9 -8Q-2 -2 -9 8" fill="none" stroke="#a8ffe9" stroke-width="1.6" stroke-linecap="round" ${K("draw",.2,.35)}/>`+glow("fxGreen",12,.18,.45)+ring(7,"#a8ffe9",1.6,.2,.4)+rays(7,3,11,"#d8fff4",1.1,.2,.4)+bits(f,4,S_LEAF,.22,.5,10,-10)),
+qislash:(f,x,y,x2,y2,V)=>{
+  let s=TR(x,y,glow("fxGreen",10,0,.3)+ring(7,"#a8ffe9",1.4,0,.3))+proj(x,y,x2,y2,CRESC,0,.42);
+  const cs=f.cells||[];
+  cs.forEach((c,i)=>{const t=+(.1+(i+1)/Math.max(1,cs.length)*.3).toFixed(2);s+=TR(V(c[0])*10+5,V(c[1])*10+5,glow("fxGreen",12,t,.4)+rays(6,2,10,"#d8fff4",1.2,t,.35)+bits(f,3,S_LEAF,t,.5,9,-10,i*5))});
+  return s;
+},
+awaken:(f,x,y)=>TR(x,y,glow("fxGreen",18,0,.6)+glow("fxGold",12,.05,.5)+ring(8,"#a8ffe9",1.8,0,.5)+ring(8,"#fff6c8",1.2,.14,.5)+ring(8,"#5ff5d4",1.4,.28,.55)+rays(10,4,15,"#d8fff4",1.3,.1,.5)+bits(f,6,S_STAR,.1,.6,12,-22)+bits(f,4,S_LEAF,.2,.6,12,-18,5)),
+tide:(f,x,y,x2,y2)=>TR(x2,y2,glow("fxWater",14,.15,.5)+[-5,0,5].map((o,i)=>`<g transform="translate(${o} 6)"><g ${K("drop",(.08+i*.06).toFixed(2),.35,"--sx:0;--sy:14;")}><path d="M0 -${14-Math.abs(o)} L3 6 L-3 6Z" fill="#bfe8ff" stroke="#2a7fd8" stroke-width=".7"/></g></g>`).join("")+ring(8,"#8fd3ff",1.6,.3,.45)+bits(f,6,S_BUB,.3,.55,12,-14)+rays(7,3,11,"#d9f2ff",1,.3,.35)),
+bubble:(f,x,y,x2,y2)=>(Math.hypot(x2-x,y2-y)>3?proj(x,y,x2,y2,`<circle r="3" fill="url(#fxWater)"/>`,0,.3):"")+TR(x,y,glow("fxWater",9,0,.3)+ring(6,"#8fd3ff",1.2,0,.4))+TR(x2,y2,`<circle r="10" fill="url(#fxWater)" ${K("burst",.25,.6)}/><circle r="10" fill="none" stroke="#d9f2ff" stroke-width="1.6" ${K("pulse",.25,.6)}/>`+ring(12,"#8fd3ff",1.2,.4,.5)+bits(f,6,S_BUB,.3,.6,12,-14)),
+vortex:(f,x,y)=>TR(x,y,glow("fxWater",24,0,.7)+ring(10,"#bfe8ff",2,0,.55)+ring(18,"#4fb0f0",1.6,.1,.6)+ring(25,"#8fd3ff",1.2,.2,.6)+`<g ${K("spin",0,.9,"--rot:-300deg;")}><path d="M0 0C0 -6 9 -6 9 2C9 12 -8 12 -8 -2C-8 -17 16 -17 19 0" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></g>`+bits(f,8,S_BUB,.1,.7,34,-8)),
+ambush:(f,x,y,x2,y2)=>TR(x,y,glow("fxPurple",17,0,.4)+ring(9,"#ff4a5a",2,0,.4)+ring(9,"#ffd0e4",1.2,.1,.4)+rays(10,3,14,"#ffd0e4",1.3,0,.35)+bits(f,5,S_DROP,.1,.55,8,12,3,"fall")+bits(f,3,S_STAR,.1,.5,10,-12))
+  +(Math.hypot(x2-x,y2-y)>3?`<line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#c58bff" stroke-width="1.2" stroke-dasharray="1.5 2" ${K("fade",.05,.5)}/>`+TR(x2,y2,glow("fxPurple",11,.3,.45)+bits(f,4,S_STARP,.32,.5,9,-12)):"")
+});
 
 function addFx(o){
   o.dur=o.dur||FXD[o.type]||1200;o.x2=o.x2===undefined?o.x:o.x2;o.y2=o.y2===undefined?o.y:o.y2;
@@ -473,6 +514,14 @@ function fxHTML(){
   return `<svg class="fxs" viewBox="0 0 100 100" aria-hidden="true">`+FX.filter(f=>!f.hid||f.team===my).map(f=>{
     const r=FXR[f.type];if(!r)return "";
     return `<g style="--d:${f.dur}ms;--dl:${Math.round((f.dl||0)-(n-f.t0))}ms">${r(f,V(f.x)*10+5,V(f.y)*10+5,V(f.x2)*10+5,V(f.y2)*10+5,V)}</g>`;
+  }).join("")+`</svg>`;
+}
+function vxHTML(){
+  if(!VX.length)return "";
+  const flip=onlineGame&&onlineMyTeam===1,V=v=>flip?9-v:v,dl=-(Date.now()/1000%3.2).toFixed(2);
+  return `<svg class="fxs" viewBox="0 0 100 100" aria-hidden="true">`+VX.map(v=>{
+    const cx=V(v.x)*10+5,cy=V(v.y)*10+5;
+    return `<g transform="translate(${cx} ${cy})"><rect x="-25" y="-25" width="50" height="50" fill="#2a7fd8" fill-opacity=".12" stroke="#8fd3ff" stroke-opacity=".55" stroke-width=".5" stroke-dasharray="2 2"/><circle r="22" fill="#4fb0f0" fill-opacity=".1"/><g class="vsp" style="animation-delay:${dl}s"><path d="M0 0C0 -6 9 -6 9 2C9 12 -8 12 -8 -2C-8 -17 16 -17 19 0C22 19 -4 26 -16 14" fill="none" stroke="#bfe8ff" stroke-width="1.8" stroke-linecap="round" stroke-opacity=".85"/><path d="M0 0C-5 -4 -9 3 -5 7C2 13 14 6 12 -4C9 -15 -8 -14 -14 -6" fill="none" stroke="#4fb0f0" stroke-width="1.4" stroke-linecap="round" stroke-opacity=".7"/></g><circle r="2.2" fill="#e8f8ff"/></g>`;
   }).join("")+`</svg>`;
 }
 function showFx(u,s,T){
@@ -490,7 +539,7 @@ function setup(){
   <div class="opts">${KEYS.map(k=>`<button class="opt ${pick.includes(k)?"on":""}" data-k="${k}">${shape(k,0)}<b>${R[k].n}</b><br><small class="mu">${RAR[R[k].rar]} · HP ${R[k].hp} · Pop ${R[k].pop}</small></button>`).join("")}</div>
   <div><b>Population ${tot}/${CAP}</b></div>
   <div id="pickWait" class="mu">${online?"เมื่อยืนยันแล้วจะรออีกฝ่ายเลือกตัวละคร":""}</div>
-  <button class="m" id="go" ${pick.length&&!onlineSubmitted?"":"disabled"} style="padding:10px 22px;font-size:16px">${online?"ยืนยันตัวละคร":"เริ่มเกม"}</button>`;
+  <button class="m" id="go" ${pick.length&&!onlineSubmitted?"":"disabled"} style="padding:10px 22px;font-size:16px">${online?"ยืนยันตัวละคร":"เริ่มเกม"}</button>${online?"":`<button class="m" id="backLobby" style="background:var(--sf2);color:var(--tx)">กลับหน้าแรก</button>`}`;
   if(onlineSubmitted){$("pickWait").textContent="ยืนยันกองกำลังแล้ว กำลังรออีกฝ่าย...";$("go").textContent="รออีกฝ่าย";}
   $("su").querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{
     if(onlineSubmitted)return;
@@ -499,17 +548,18 @@ function setup(){
     else if(tot+R[k].pop<=CAP)pick.push(k);
     setup();
   });
+  const bl=$("backLobby");if(bl)bl.onclick=()=>backToLobby(onlineSocket?.connected?"เชื่อมต่อเซิร์ฟเวอร์แล้ว":"ออฟไลน์ · เล่นกับบอทได้",false);
   $("go").onclick=()=>{
     if(online){if(!pick.length||onlineSubmitted)return;onlineSubmitted=true;setup();onlineSocket.emit("submit_pick",{roomCode:onlineRoom,picks:pick});}
     else start();
   };
 }
 const spread=n=>n===1?[4]:Array.from({length:n},(_,i)=>Math.round(1+i*8/(n-1)));
-function mk(k,team,x,y){return{id:nid++,k,team,x,y,hp:R[k].hp,sh:0,cd:R[k].s.map(()=>0),aura:0,ww:0,fly:R[k].pf?1:0,tpUsed:false,stunned:false,st:{poison:0,burn:0,bleed:0,stun:0,freeze:0,silent:0,regen:null}}}
+function mk(k,team,x,y){return{id:nid++,k,team,x,y,hp:R[k].hp,sh:0,cd:R[k].s.map(()=>0),aura:0,ww:0,awk:0,fly:R[k].pf?1:0,tpUsed:false,stunned:false,st:{poison:0,burn:0,bleed:0,stun:0,freeze:0,silent:0,regen:null}}}
 function start(){
   // pick your own positions first; the bot places its random army on its two back rows
   deployStart(pick,0,DEPLOY_SECONDS,layout=>{
-    U=[];over=-1;nid=1;msg="";FX=[];
+    U=[];over=-1;nid=1;msg="";FX=[];VX=[];
     layout.forEach(l=>U.push(mk(l.k,0,l.x,l.y)));
     const ks=[...KEYS].sort(()=>Math.random()-.5),n=3+Math.floor(Math.random()*3),en=[];let pop=0;
     for(const k of ks){if(en.length>=n)break;if(pop+R[k].pop<=CAP){en.push(k);pop+=R[k].pop}}
@@ -662,11 +712,15 @@ function loseHP(t,d){
   const a=Math.min(t.sh,d);t.sh-=a;t.hp-=d-a;
   num(t,"-"+d,"#ff5a66");
   if(d>0&&t.ww>0)exitWW(t);
-  if(t.hp<=0){U=U.filter(x=>x!==t);if(sel===t.id)sel=null;if(!U.some(x=>x.team===t.team))over=1-t.team}
+  if(t.hp<=0){U=U.filter(x=>x!==t);VX=VX.filter(v=>v.owner!==t.id);if(sel===t.id)sel=null;if(!U.some(x=>x.team===t.team))over=1-t.team}
 }
+// the Tide Shield cooldown only starts once the silence it caused is gone (it ends by time or is cured)
+function endSilence(u){const g=R[u.k].s.findIndex(x=>x.k==="g");if(g>=0)u.cd[g]=R[u.k].s[g].cd}
 function heal(t,a,cure){
+  // Curse of Master: healing is allowed but reduced (rounded, at least 1); curing Bleeding/Poison still works
+  if(R[t.k].healMul)a=Math.max(1,Math.round(a*R[t.k].healMul));
   t.hp=Math.min(R[t.k].hp,t.hp+a);num(t,"+"+a,"#43c07a");
-  if(cure){t.st.bleed=0;t.st.poison=0}
+  if(cure){t.st.bleed=0;t.st.poison=0;if(t.st.silent>0){t.st.silent=0;endSilence(t)}}
 }
 function hurt(src,t,s,d){
   if(!canHit(s,t)){
@@ -676,7 +730,16 @@ function hurt(src,t,s,d){
   const rule=(R[t.k].blk||[]).find(b=>b.c.includes(s.c)&&b.l.includes(s.l)&&(!b.tg||b.tg===s.tg)&&Math.random()<b.p);
   if(rule){addFx({type:"block",x:t.x,y:t.y});msg=R[t.k].n+" กันการโจมตีได้!";return false}
   // damage modifiers multiply: kingdom sword vs dragon/spirit/legend, ranged vs a flying dragon, element resistance
-  let m=1;const T=R[t.k];
+  let m=1;const T=R[t.k],beast=isBeast(t);
+  // Beast Hunter: fixed damage against dragons/monsters, then Awakening adds +1 (+3 against beasts) before the multipliers
+  if(beast&&s.bd!==undefined)d=s.bd;
+  if(src.awk>0&&s.d)d+=beast?3:1;
+  // takes more from ranged skills, except when the attacker is itself a dragon/monster
+  if(T.rngIn&&isRanged(s)&&!isBeast(src))m*=T.rngIn;
+  // Awakening: only 10% of the damage dealt by dragons/monsters
+  if(t.awk>0&&isBeast(src))m*=.1;
+  if(T.mulRanged&&isRanged(s))m*=T.mulRanged;
+  if(T.mulMelee&&hasT(s,"melee"))m*=T.mulMelee;
   if(hasT(s,"kingdom")&&unitTags(t).some(g=>["dragon","spirit","legend"].includes(g)))m*=1.5;
   if(isRanged(s)&&T.flyRangedMul&&t.fly>0)m*=T.flyRangedMul;
   if(T.res)(s.tags||[]).forEach(g=>{if(T.res[g]!==undefined)m*=T.res[g]});
@@ -708,6 +771,7 @@ function begin(t){
     if(!U.includes(u)||over>=0)return;
     u.cd=u.cd.map(c=>Math.max(0,c-1));
     u.stunned=u.st.stun>0;u.st.stun=0;
+    if(u.st.silent>0){u.st.silent--;if(u.st.silent===0)endSilence(u)}
     if(u.st.regen){addFx({type:"tick",v:"regen",x:u.x,y:u.y});heal(u,u.st.regen.amt);u.st.regen.left--;if(u.st.regen.left<=0)u.st.regen=null}
     if(u.st.bleed>0&&U.includes(u)){addFx({type:"tick",v:"bleed",x:u.x,y:u.y});loseHP(u,2);u.st.bleed--}
     if(u.st.poison&&U.includes(u)){addFx({type:"tick",v:"poison",x:u.x,y:u.y});loseHP(u,u.st.poison)}
@@ -715,6 +779,9 @@ function begin(t){
     if(!U.includes(u)||over>=0)return;
     if(u.aura>0){u.aura--;tick(u,R[u.k].s.find(x=>x.k==="s"))}
     if(u.ww>0){u.ww--;if(u.ww===0)exitWW(u)}
+    if(U.includes(u)&&over<0)VX.filter(v=>v.owner===u.id).forEach(pullVortex);
+    if(!U.includes(u)||over>=0)return;
+    if(u.awk>0){u.awk--;if(u.awk===0){const v=R[u.k].s.findIndex(x=>x.k==="v");if(v>=0)u.cd[v]=R[u.k].s[v].cd;addFx({type:"smoke",x:u.x,y:u.y,sz:.7})}}
     if(R[u.k].pf)u.fly=1;else if(u.fly>0){u.fly--;if(u.fly===0)land(u)}
   });
   render();
@@ -726,6 +793,8 @@ function usable(u,si){
   if(turn!==u.team||over>=0||u.cd[si]>0||dis(u)||u.st.silent>0)return false;
   if(s.k==="m"?p.mp<1:p.ap<1)return false;
   if(s.k==="w"&&u.ww>0)return false;
+  if(s.k==="v"&&u.awk>0)return false;
+  if(s.k==="o"&&VX.some(v=>v.owner===u.id))return false;
   if(s.k==="f"&&u.fly>0)return false;
   if(s.fl&&!(u.fly>0))return false;
   if(s.tp&&u.tpUsed)return false;
@@ -737,26 +806,73 @@ function targetsFor(u,si){
   if(s.k==="t")return U.filter(e=>e.team!==u.team&&targetable(e)&&d(e)>=1&&d(e)<=s.r&&canHit(s,e));
   if(s.k==="L")return U.filter(e=>e.team!==u.team&&targetable(e)&&d(e)>=1&&d(e)<=s.r&&canHit(s,e)&&pushCell(u,e));
   if(s.k==="p")return U.filter(e=>e.st.freeze<1&&d(e)<=s.r&&(e.team===u.team||(targetable(e)&&d(e)>=1)));
+  if(s.k==="g")return U.filter(e=>e.team===u.team&&e.st.freeze<1&&d(e)<=s.r&&allyBuffOK(u,e));
   if(s.k==="h"||s.k==="r")return U.filter(e=>e.team===u.team&&e.st.freeze<1&&d(e)<=s.r);
   return[];
+}
+// A cell is open to a unit when it is empty, or when it holds a HIDDEN enemy (Wind-Walk): the mover cannot see it,
+// so it may walk (or dash, teleport, jump) onto it and trigger an ambush. A visible unit, or an ally's hidden unit, blocks.
+function open(u,x,y){const e=at(x,y);return !e||(e!==u&&e.team!==u.team&&e.ww>0)}
+// Walking onto a hidden enemy: the mover is stunned, takes 5 damage and bleeds for 2 turns; the hidden unit is revealed,
+// stunned and pushed out to the free neighbouring cell farthest from the mover (or swapped onto the mover's old cell).
+function enter(u,x,y,dl=0){
+  const w=at(x,y);
+  if(!w||w===u||w.team===u.team||!(w.ww>0)){u.x=x;u.y=y;return false}
+  const ox=u.x,oy=u.y,pc=pushCell(u,w)||[ox,oy];
+  u.x=x;u.y=y;w.x=pc[0];w.y=pc[1];
+  addFx({type:"ambush",x,y,x2:pc[0],y2:pc[1],dl});
+  exitWW(w);
+  w.st.stun=Math.max(w.st.stun,1);
+  u.st.stun=Math.max(u.st.stun,1);u.st.bleed=Math.max(u.st.bleed,2);
+  msg=R[u.k].n+" เหยียบ "+R[w.k].n+" ที่ซ่อนอยู่! สตัน · -5 · Bleeding 2 ตา";
+  const keep=FXLAG;FXLAG=dl+250;
+  loseHP(u,5);
+  FXLAG=keep;
+  return true;
 }
 function mcells(u,s){
   const r=[];
   for(let x=0;x<10;x++)for(let y=0;y<10;y++)
-    if(!at(x,y)&&(s.tp||Math.max(Math.abs(x-u.x),Math.abs(y-u.y))<=s.r))r.push([x,y]);
+    if(open(u,x,y)&&(s.tp||Math.max(Math.abs(x-u.x),Math.abs(y-u.y))<=s.r))r.push([x,y]);
+  return r;
+}
+// the cells a line skill (Qi Tian Slash) can cover: up to s.r cells in each of the 8 directions
+function lineCells(u,s){
+  const r=[];
+  ADJ.forEach(d=>{for(let i=1;i<=s.r;i++){const x=u.x+d[0]*i,y=u.y+d[1]*i;if(x<0||y<0||x>9||y>9)break;r.push([x,y])}});
   return r;
 }
 function moves(u){
-  const m=(u.fly>0&&!R[u.k].pf)?2:R[u.k].mv,r=[];
+  const m=Math.max(R[u.k].mv,(u.fly>0&&!R[u.k].pf)?2:0,u.awk>0?2:0),r=[];
   if(turn!==u.team||P[u.team].mp<1||dis(u))return r;
   for(let x=u.x-m;x<=u.x+m;x++)for(let y=u.y-m;y<=u.y+m;y++)
-    if(x>=0&&y>=0&&x<10&&y<10&&!at(x,y))r.push([x,y]);
+    if(x>=0&&y>=0&&x<10&&y<10&&open(u,x,y))r.push([x,y]);
   return r;
+}
+// Whirlpool: every enemy within 2 cells of the centre (5x5) that the skill can touch is pulled one step toward the centre
+// (the closest first, so the others pack around whoever sits in the middle) and takes 3 damage the first time, 2 afterwards.
+function pullVortex(v){
+  const o=byId(v.owner);
+  if(!o){VX=VX.filter(z=>z!==v);return}
+  const si=R[o.k].s.findIndex(x=>x.k==="o"),s=R[o.k].s[si],d2=e=>(e.x-v.x)**2+(e.y-v.y)**2;
+  addFx({type:"vortex",x:v.x,y:v.y});
+  const keep=FXLAG;FXLAG=500;
+  U.filter(e=>e.team!==o.team&&Math.max(Math.abs(e.x-v.x),Math.abs(e.y-v.y))<=2&&canHit(s,e)).sort((a,b)=>d2(a)-d2(b)).forEach(e=>{
+    if(!U.includes(e)||over>=0)return;
+    const cur=d2(e);let best=null;
+    ADJ.forEach(d=>{const x=e.x+d[0],y=e.y+d[1];if(x<0||y<0||x>9||y>9||at(x,y))return;const q=(x-v.x)**2+(y-v.y)**2;if(q<cur&&(!best||q<best.q))best={x,y,q}});
+    if(best){e.x=best.x;e.y=best.y}
+    const ok=hurt(o,e,s,v.hit[e.id]?2:3);v.hit[e.id]=1;
+    if(ok&&U.includes(e)&&Math.random()<s.stunP-(R[e.k].stunRes||0))e.st.stun=Math.max(e.st.stun,s.stun||1);
+  });
+  FXLAG=keep;
+  v.left--;
+  if(v.left<=0){VX=VX.filter(z=>z!==v);o.cd[si]=s.cd;addFx({type:"smoke",x:v.x,y:v.y,sz:1.2})}
 }
 function cast(u,si,tx,ty){
   const s=eff(u,si),T=at(tx,ty);
   if(s.k==="m")P[u.team].mp--;else P[u.team].ap--;
-  u.cd[si]=(s.k==="w"||s.k==="f")?0:s.cd;
+  u.cd[si]=(s.k==="w"||s.k==="f"||s.k==="v"||s.k==="g"||s.k==="o")?0:s.cd;
   FXLAG=FXH[s.v]||0;
   if(s.k==="t"){
     showFx(u,s,T);
@@ -772,8 +888,9 @@ function cast(u,si,tx,ty){
     // status effects only land when the hit itself landed (not parried, not blocked)
     if(ok&&U.includes(T)){
       if(s.bleed)T.st.bleed=Math.max(T.st.bleed,s.bleed);
+      if(s.bleedB&&isBeast(T))T.st.bleed=Math.max(T.st.bleed,s.bleedB);
       if(s.burn)T.st.burn+=s.burn;
-      if(s.stunP&&Math.random()<s.stunP)T.st.stun=Math.max(T.st.stun,s.stun||1);
+      if(s.stunP&&Math.random()<s.stunP-(R[T.k].stunRes||0))T.st.stun=Math.max(T.st.stun,s.stun||1);
     }
     if(s.xww)exitWW(u);
   }else if(s.k==="L"){
@@ -784,8 +901,8 @@ function cast(u,si,tx,ty){
     if(ok&&U.includes(T))T.st.stun=Math.max(T.st.stun,s.stun||1);
   }else if(s.k==="j"){
     addFx({type:"asteroid",x:u.x,y:u.y,x2:tx,y2:ty});
-    u.x=tx;u.y=ty;
-    ADJ.forEach(d=>{const t=at(tx+d[0],ty+d[1]);if(t&&t.team!==u.team&&over<0)hurt(u,t,s,s.d)});
+    enter(u,tx,ty,1250);
+    if(U.includes(u))ADJ.forEach(d=>{const t=at(tx+d[0],ty+d[1]);if(t&&t.team!==u.team&&over<0)hurt(u,t,s,s.d)});
   }else if(s.k==="a"){
     const cs=CR.map(d=>[tx+d[0],ty+d[1]]).filter(c=>c[0]>=0&&c[1]>=0&&c[0]<10&&c[1]<10);
     addFx({type:"meteor",x:tx,y:ty,cells:cs});
@@ -802,8 +919,24 @@ function cast(u,si,tx,ty){
     // A unit that is invisible must not reveal where it went to the opponent.
     const H=u.ww>0?{hid:1,team:u.team}:{};
     addFx({type:s.tp?"tele":"dash",x:u.x,y:u.y,x2:tx,y2:ty,...H});
-    u.x=tx;u.y=ty;if(s.tp)u.tpUsed=true;
-  }else if(s.k==="w"){u.ww=4;addFx({type:"smoke",x:u.x,y:u.y});msg=R[u.k].n+" หายตัว (Wind-Walk)"}
+    enter(u,tx,ty,s.tp?650:450);if(s.tp&&U.includes(u))u.tpUsed=true;
+  }else if(s.k==="q"){
+    const dx=Math.sign(tx-u.x),dy=Math.sign(ty-u.y),cs=[];
+    for(let i=1;i<=s.r;i++){const cx=u.x+dx*i,cy=u.y+dy*i;if(cx<0||cy<0||cx>9||cy>9)break;cs.push([cx,cy])}
+    const last=cs[cs.length-1]||[u.x,u.y];
+    addFx({type:"qislash",x:u.x,y:u.y,x2:last[0],y2:last[1],cells:cs});
+    msg=R[u.k].n+" ใช้ "+s.n;
+    cs.forEach(c=>{const t=at(c[0],c[1]);if(t&&t.team!==u.team&&over<0)hurt(u,t,s,s.d)});
+  }else if(s.k==="g"){
+    addFx({type:"bubble",x:u.x,y:u.y,x2:T.x,y2:T.y});
+    T.sh+=s.sh;u.st.silent=2;
+    msg=R[u.k].n+" ใช้ "+s.n+(T===u?"":" ให้ "+R[T.k].n)+" · โล่ +"+s.sh+" แต่ติดใบ้";
+  }else if(s.k==="o"){
+    const v={id:nid++,owner:u.id,team:u.team,x:tx,y:ty,left:5,hit:{}};
+    VX.push(v);msg=R[u.k].n+" สร้างวังวน (Whirlpool)";
+    pullVortex(v);
+  }else if(s.k==="v"){u.awk=4;addFx({type:"awaken",x:u.x,y:u.y});msg=R[u.k].n+" ปลุกพลัง (Awakening)"}
+  else if(s.k==="w"){u.ww=4;addFx({type:"smoke",x:u.x,y:u.y});msg=R[u.k].n+" หายตัว (Wind-Walk)"}
   else if(s.k==="f"){u.fly=4;addFx({type:"swirl",x:u.x,y:u.y});msg=R[u.k].n+" ขึ้นบิน"}
   // a permanently flying unit lands after using any skill, until its own next turn
   if(R[u.k].pf&&u.fly>0&&U.includes(u)){u.fly=0;addFx({type:"smoke",x:u.x,y:u.y,sz:.6,dl:s.k==="j"?1300:350})}
@@ -816,8 +949,8 @@ function render(){
   const vis=U.filter(u=>!hidden(u)),me=vis.filter(u=>u.team===meTeam),en=vis.filter(u=>u.team===enemyTeam),u=sel?byId(sel):null;
   const mv=u&&mode<0?moves(u):[];
   const sk=u&&mode>=0?eff(u,mode):null;
-  const tg=sk&&["t","p","h","r","L"].includes(sk.k)?targetsFor(u,mode):[];
-  const mc=sk&&["m","j"].includes(sk.k)?mcells(u,sk):[];
+  const tg=sk&&["t","p","h","r","L","g"].includes(sk.k)?targetsFor(u,mode):[];
+  const mc=sk&&["m","j"].includes(sk.k)?mcells(u,sk):sk&&sk.k==="q"?lineCells(u,sk):[];
   const rows=a=>a.map(x=>`<div class="row ${x.team!==meTeam?"e":""} ${sel===x.id?"s":""}" data-r="${x.id}">${shape(x.k,x.team!==meTeam?1:0)}<div class="bar"><i style="width:${Math.max(0,x.hp)/R[x.k].hp*100}%"></i></div><small>${x.hp}</small></div>`).join("");
   let cells="";
   for(let vy=0;vy<10;vy++)for(let vx=0;vx<10;vx++){
@@ -829,11 +962,11 @@ function render(){
       const ex=[p.team===meTeam&&p.ww>0?"ghost":"",p.fly>0?"fly":"",p.aura>0?"aura":"",p.st.freeze>0?"frz":""].join(" "),ic=icons(p);
       inner=shape(p.k,p.team!==meTeam?1:0,ex)+`<div class="hb"><i style="width:${Math.max(0,p.hp)/R[p.k].hp*100}%"></i></div>${p.sh?`<span class="sb">${p.sh}</span>`:""}${ic?`<span class="stb">${ic}</span>`:""}`;
     }
-    cells+=`<div class="cell ${(vx+vy)%2?"k":""} ${isMv?"mv":""} ${mc.some(c=>c[0]===x&&c[1]===y)?"mc":""} ${sk&&sk.k==="a"?"am":""} ${cl} ${p&&p.id===sel?"sel":""}" data-x="${x}" data-y="${y}">${inner}</div>`;
+    cells+=`<div class="cell ${(vx+vy)%2?"k":""} ${isMv?"mv":""} ${mc.some(c=>c[0]===x&&c[1]===y)?"mc":""} ${sk&&(sk.k==="a"||sk.k==="o")?"am":""} ${cl} ${p&&p.id===sel?"sel":""}" data-x="${x}" data-y="${y}">${inner}</div>`;
   }
   let panel=`<div class="mu" style="text-align:center;margin-top:30%">แตะตัวหมากของคุณ<br>เพื่อดูข้อมูลและสกิล</div>`;
   if(u&&u.team===meTeam){
-    const d=R[u.k],ic=icons(u),stx=[ic,u.ww>0?"Wind-Walk":"",u.fly>0?ICON("wing")+" บิน":"",d.pf&&!(u.fly>0)?"ลงพื้น (โดนระยะไกลไม่ได้)":"",u.aura?"ออร่าเหลือ "+u.aura+" ครั้ง":""].filter(Boolean).join(" ");
+    const d=R[u.k],ic=icons(u),stx=[ic,u.ww>0?"Wind-Walk":"",u.fly>0?ICON("wing")+" บิน":"",u.awk>0?ICON("awaken")+" Awakening "+(u.awk-1)+" เทิร์น":"",d.pf&&!(u.fly>0)?"ลงพื้น (โดนระยะไกลไม่ได้)":"",u.aura?"ออร่าเหลือ "+u.aura+" ครั้ง":""].filter(Boolean).join(" ");
     let skills="";
     if(u.st.silent>0)skills=`<div class="ps" style="font-size:1.1em;text-align:center">${ICON("silent")} ถูกใบ้</div>`;
     else skills=d.s.map((s0,i)=>{const sk0=eff(u,i);return `<button class="sk ${mode===i?"on":""}" data-s="${i}" ${usable(u,i)?"":"disabled"}><span class="i">${ICON(sk0.i)}</span><span><b>${sk0.n}</b><small>${u.cd[i]>0?"cooldown "+u.cd[i]:info(sk0)}</small>${sk0.x&&u.cd[i]<1?`<small>${sk0.x}</small>`:""}${sk0.tags?`<small class="tg">${sk0.tags.map(g=>TAGN[g]||g).join(" · ")}</small>`:""}</span></button>`}).join("");
@@ -858,12 +991,12 @@ function render(){
     :`<button class="m" id="again">กลับหน้าเลือกตัวละคร</button>`;
   $("g").innerHTML=`<div class="col left"><div class="mu">ฝ่ายคุณ</div>${rows(me)}<hr><div class="mu">ฝ่ายตรงข้าม</div>${rows(en)}</div>
   <div class="mid"><div class="top"><b>${turnLabel}</b><span>MP ${P[turn].mp}/2 · AP ${P[turn].ap}/2</span><span class="tt ${leftNow<=10?"low":""}" id="tt">${over>=0||(!onlineGame&&turn===1)?"":leftNow+" วิ"}</span><span class="msg">${esc(msg)}</span><button class="m" id="et" ${turn!==meTeam||over>=0?"disabled":""}>จบเทิร์น</button></div>
-  <div class="bw"><div class="bwrap"><div class="board" id="bd">${cells}</div>${ambHTML()}<div class="fxl">${fxHTML()}</div>${over>=0?`<div class="ov"><div style="font-size:2.2em">${over===meTeam?ICON("trophy")+" คุณชนะ!":ICON("skull")+" ฝ่ายตรงข้ามชนะ"}</div>${endBtns}</div>`:""}</div></div></div>
+  <div class="bw"><div class="bwrap"><div class="board" id="bd">${cells}</div>${ambHTML()}<div class="fxl">${vxHTML()}${fxHTML()}</div>${over>=0?`<div class="ov"><div style="font-size:2.2em">${over===meTeam?ICON("trophy")+" คุณชนะ!":ICON("skull")+" ฝ่ายตรงข้ามชนะ"}</div>${endBtns}</div>`:""}</div></div></div>
   <div class="col right">${panel}</div>`;
   $("g").querySelectorAll("[data-r]").forEach(r=>r.onclick=()=>choose(+r.dataset.r));
   $("g").querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{
     const si=+b.dataset.s,ss=eff(u,si);
-    if(["s","w","f"].includes(ss.k)){cast(u,si);mode=-1;render();broadcastGameState();}else mode=mode===si?-1:si;
+    if(["s","w","f","v"].includes(ss.k)){cast(u,si);mode=-1;render();broadcastGameState();}else mode=mode===si?-1:si;
     render();
   });
   $("bd").onclick=e=>{const c=e.target.closest(".cell");if(c)cellClick(+c.dataset.x,+c.dataset.y)};
@@ -883,10 +1016,10 @@ function cellClick(x,y){
     if(mode>=0){
       const s=eff(u,mode);
       if(usable(u,mode)){
-        const ok=s.k==="a"||(["m","j"].includes(s.k)&&mcells(u,s).some(c=>c[0]===x&&c[1]===y))||(p&&targetsFor(u,mode).includes(p));
+        const ok=s.k==="a"||s.k==="o"||(["m","j"].includes(s.k)&&mcells(u,s).some(c=>c[0]===x&&c[1]===y))||(s.k==="q"&&lineCells(u,s).some(c=>c[0]===x&&c[1]===y))||(p&&targetsFor(u,mode).includes(p));
         if(ok){cast(u,mode,x,y);mode=-1;render();broadcastGameState();return}
       }
-    }else if(!p0&&moves(u).some(m=>m[0]===x&&m[1]===y)){u.x=x;u.y=y;P[meTeam].mp--;render();broadcastGameState();return}
+    }else if(moves(u).some(m=>m[0]===x&&m[1]===y)){enter(u,x,y);P[meTeam].mp--;render();broadcastGameState();return}
   }
   if(p)return choose(p.id);
   sel=null;mode=-1;render();
@@ -919,6 +1052,18 @@ function botAct(){
         }
       }else if(s.k==="s"){const n=foes.filter(e=>dist(u,e)===1).length;if(n)cand(u,si,0,0,s.d*n+3)}
       else if(s.k==="L")targetsFor(u,si).forEach(t=>cand(u,si,t.x,t.y,s.d+(t.hp<=s.d?20:0)+2));
+      else if(s.k==="q")ADJ.forEach(d=>{
+        let sc=0;
+        for(let i=1;i<=s.r;i++){const t=at(u.x+d[0]*i,u.y+d[1]*i);if(t&&t.team===0&&!(t.ww>0)&&canHit(s,t))sc+=s.d+(t.hp<=s.d?15:0)}
+        if(sc>0)cand(u,si,u.x+d[0],u.y+d[1],sc);
+      });
+      else if(s.k==="v"){if(foes.some(e=>dist(u,e)<=3))cand(u,si,0,0,4)}
+      else if(s.k==="o"){
+        for(let x=0;x<10;x++)for(let y=0;y<10;y++){
+          const n=foes.filter(e=>Math.max(Math.abs(e.x-x),Math.abs(e.y-y))<=2&&canHit(s,e)).length;
+          if(n>=2)cand(u,si,x,y,n*4);
+        }
+      }
       else if(s.k==="j")mcells(u,s).forEach(c=>{let sc=0;ADJ.forEach(d=>{const t=at(c[0]+d[0],c[1]+d[1]);if(t&&t.team===0&&!(t.fly>0))sc+=s.d});if(sc>0)cand(u,si,c[0],c[1],sc)});
       else if(s.k==="h")targetsFor(u,si).forEach(t=>{const miss=R[t.k].hp-t.hp;if(miss>=4)cand(u,si,t.x,t.y,Math.min(s.heal,miss)+(t.hp<R[t.k].hp/2?4:0))});
       else if(s.k==="r")targetsFor(u,si).forEach(t=>{if(R[t.k].hp-t.hp>=10)cand(u,si,t.x,t.y,7)});
@@ -930,7 +1075,7 @@ function botAct(){
     let b=null;
     const nd=(x,y)=>Math.min(...foes.map(e=>Math.hypot(e.x-x,e.y-y)));
     mine.forEach(u=>{const cur=nd(u.x,u.y);moves(u).forEach(m=>{const g=cur-nd(m[0],m[1]);if(g>0.01&&(!b||g>b.g))b={u,m,g}})});
-    if(b){b.u.x=b.m[0];b.u.y=b.m[1];P[1].mp--;return true}
+    if(b){enter(b.u,b.m[0],b.m[1]);P[1].mp--;return true}
   }
   return false;
 }
@@ -996,11 +1141,11 @@ function returnToBoardArena(){
 // Sends the current snapshot plus the visual effects produced since the last snapshot.
 function broadcastGameState(){
   if(!onlineGame||applyingRemoteState||!onlineSocket?.connected||!onlineRoom)return;
-  onlineSocket.emit("game_state",{roomCode:onlineRoom,state:{U,P,turn,over,nid,msg,fx:fxOut}});
+  onlineSocket.emit("game_state",{roomCode:onlineRoom,state:{U,P,turn,over,nid,msg,VX,fx:fxOut}});
   fxOut=[];
 }
 function startOnlineGame(data){
-  onlineGame=true;onlinePicks=data.picks;onlineMyTeam=onlinePlayer-1;U=[];over=-1;nid=1;msg="เกมเริ่มแล้ว";FX=[];fxOut=[];sel=null;mode=-1;
+  onlineGame=true;onlinePicks=data.picks;onlineMyTeam=onlinePlayer-1;U=[];over=-1;nid=1;msg="เกมเริ่มแล้ว";FX=[];fxOut=[];VX=[];sel=null;mode=-1;
   onlineRematchSent=false;onlineRematchOpp=false;
   stopDeploy();
   setArena(Number.isInteger(data.theme)?data.theme:0);resetTurnClock();msg="เกมเริ่มแล้ว · สนาม: "+ARENA[arena].n;
@@ -1062,7 +1207,7 @@ function connectOnlineLobby(){
     applyingRemoteState=true;
     try{
       const st=data.state;
-      U=st.U;P=st.P;turn=st.turn;over=st.over;nid=st.nid;msg=st.msg||"";sel=null;mode=-1;
+      U=st.U;P=st.P;turn=st.turn;over=st.over;nid=st.nid;VX=st.VX||[];msg=st.msg||"";sel=null;mode=-1;
       (st.fx||[]).forEach(f=>addFx(f));
       render();
     }finally{applyingRemoteState=false}
@@ -1087,7 +1232,12 @@ function connectOnlineLobby(){
   onlineSocket.on("disconnect",()=>lobbyStatus("การเชื่อมต่อขาดหาย กำลังเชื่อมต่อใหม่..."));
 }
 document.addEventListener("DOMContentLoaded",()=>{
-  connectOnlineLobby();
+  document.getElementById("botBtn").onclick=()=>{
+    onlineGame=false;onlineStarted=false;pick=[];U=[];over=-1;
+    document.getElementById("onlineLobby").style.display="none";
+    setup();
+  };
+  try{connectOnlineLobby()}catch(e){lobbyStatus("ออฟไลน์ · เล่นกับบอทได้")}
   document.getElementById("createRoomBtn").onclick=()=>{
     if(onlineSocket?.connected) onlineSocket.emit("create_room");
     else lobbyStatus("ยังไม่ได้เชื่อมต่อเซิร์ฟเวอร์");
